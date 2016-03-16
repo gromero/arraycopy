@@ -103,9 +103,6 @@ int main(void)
   uint64_t* destination = malloc(CHUNK_SIZE); // 16 MiB, or 1 MiB 64-bit element(s).
   uint64_t* zero	= malloc(CHUNK_SIZE); // To hold zeros.
 
-  uint64_t* aux1;
-  uint64_t* aux2;
-
   bzero(zero, CHUNK_SIZE);
 
   int fd, rc;
