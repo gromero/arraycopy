@@ -7,23 +7,35 @@
 #include <unistd.h>
 #include <strings.h>
 
-// 16 MiB, or 1 M 64-bit elements
-#define CHUNK_SIZE 16*1024*1024
+// Bytes per element. In this example
+// elements are 64-bit or 8 bytes.
+#define ELEM_SIZE 8
+
+// 32 bytes (or 4 64-bit elements) copied
+// at a time (per loop).
+#define BULK_COPY_SIZE 32
+
+// General scratch buffer size is 32 MiB,
+// or 1024 x 1024 x (4 64-bit elements ==
+// 8 bytes).
+#define SCRATCH_BUFFER_SIZE ELEM_SIZE
+
+
 
 #if !defined(VSX)
-void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
+void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */)
 {
-  size_t i;
+  size_t loop;
   size_t remainder;
 
-  // Bulk rd/wr size is 4, ie 4 x 8 bytes, or
-  // 4 x 64-bit elements rd/wr "at once".
-  remainder = n % 4;
-  i = n / 4;
+  loop      = n / (BULK_COPY_SIZE / ELEM_SIZE); // n / 4 64-bit elements.
+  remainder = n % (BULK_COPY_SIZE / ELEM_SIZE); // n % 4 64-bit elements.
 
-  printf("Copying %ld 64-bit element(s), "  \
+#if defined(DEBUG)
+  printf("Copying %ld 64-bit element(s), " \
             "with %ld block iteration(s) " \
              "and %ld byte(s) as remainder(s)\n", n, i, remainder);
+#endif
 
   asm (
        "        cmpldi %2, 0    \n\t"
@@ -44,7 +56,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "        bdnz 1b		\n\t"
        "2:      nop             \n\t"
         :
-        : "r"(dst), "r"(src), "r"(i)
+        : "r"(dst), "r"(src), "r"(loop)
         : "memory", "r3", "r4", "r5", "r6"
        );
 
@@ -62,11 +74,11 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   // 4 x 64-bit elements rd/wr "at once".
   remainder = n % 4;
   i = n / 4;
-
+#if defined(DEBUG)
   printf("VSX copying %ld 64-bit element(s), " \
                 "with %ld block iteration(s) " \
                  "and %ld byte(s) as remainder(s)\n", n, i, remainder);
-
+#endif
   asm (
        "1:      cmpldi %2, 0     \n\t"
        "        beq- 1f          \n\t"
@@ -75,10 +87,10 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        /********* Main Code ********/
        "2:      lxvd2x  3, 0, %1 \n\t"
        "        lxvd2x  4, %1, 5 \n\t"
-       "        addi %1, %1, 16  \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
-       "      	addi %0, %0, 16  \n\t"
+       "        addi %1, %1, 32  \n\t"
+       "      	addi %0, %0, 32  \n\t"
        /****************************/
        "	bdnz  2b	 \n\t"
        "1:      nop              \n\t"
@@ -122,11 +134,9 @@ int main(void)
   printf("2. Exercising...\n");
 
   // Spend some time here.
-  for (int p; p < 2500; ++p) {
+  for (int p = 0; p < 2500; ++p) {
     // Copy 16 MiB, or 1 M 64-bit (8 bytes) elements.
     arraycopy(destination, source, 1024*1024);
-    // Just zero destination.
-    arraycopy(destination, zero,   1024*1024);
   }
 
   printf("2. Done.\n");
