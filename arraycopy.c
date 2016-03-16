@@ -81,9 +81,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "      	addi %0, %0, 16  \n\t"
        /****************************/
        "	bdnz  2b	 \n\t"
-//     "        subi %2, %2, 1   \n\t"
-//     "        cmpldi %2, 0     \n\t"
-//     "        bgt+ 2b          \n\t"
        "1:      nop              \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
