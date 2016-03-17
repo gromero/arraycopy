@@ -8,3 +8,4 @@ debug:
 
 clean:
 	rm -fr arraycopy arraycopy_vsx
+	rm -fr perf*
