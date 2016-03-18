@@ -7,6 +7,15 @@
 #include <unistd.h>
 #include <strings.h>
 
+/*
+ *  Copy 16 MiB from one position in memory to another one using
+ *  VSX instructions and non-VSX instructions. This is intented to
+ *  be used, primarily in POWER8 processor. The script compare.sh is
+ *  provided in order to do a comparison using 'perf' tool between
+ *  these two version of arraycopy(). So just 'make' and 'compara.sh'
+ *  to perform a test.
+ */
+
 // Number of elements inside buffer and to be
 // loaded and stored between two different
 // locations in the storage.
@@ -143,7 +152,8 @@ int main(void)
   }
 
   printf("2. Done.\n");
-/*
+
+#if defined(CHECKCOPY)
   printf("3. Verifying if copy is ok...\n");
 
 
@@ -157,7 +167,7 @@ int main(void)
   }
 
   printf("3. Done.\n");
-*/
+#endif
 
   exit(0);
 }
