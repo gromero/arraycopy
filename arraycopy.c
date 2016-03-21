@@ -84,8 +84,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */
   size_t loop;
   size_t remainder;
 
-  loop      = n / (BULK_COPY_SIZE / ELEMENT_SIZE); // n / 4, Four 64-bit elements.
-  remainder = n % (BULK_COPY_SIZE / ELEMENT_SIZE); // n % 4, Four 64-bit elements.
+  loop      = n / (BULK_COPY_SIZE / ELEMENT_SIZE)*4; // n / 4, Four 64-bit elements.
+  remainder = n % (BULK_COPY_SIZE / ELEMENT_SIZE)*4; // n % 4, Four 64-bit elements.
 
 #if defined(DEBUG)
   printf("Copying %ld 64-bit element(s), " \
@@ -100,6 +100,24 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */
        "        mtctr %2         \n\t" // Set counter.
        /********* Main Code ********/
        "1:      lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  4, %1, 5 \n\t"
+       "        stxvd2x 3, 0, %0 \n\t"
+       "        stxvd2x 4, %0, 5 \n\t"
+       "        addi %1, %1, 32  \n\t" // Update src
+       "        addi %0, %0, 32  \n\t" // Update dst
+       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  4, %1, 5 \n\t"
+       "        stxvd2x 3, 0, %0 \n\t"
+       "        stxvd2x 4, %0, 5 \n\t"
+       "        addi %1, %1, 32  \n\t" // Update src
+       "        addi %0, %0, 32  \n\t" // Update dst
+       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  4, %1, 5 \n\t"
+       "        stxvd2x 3, 0, %0 \n\t"
+       "        stxvd2x 4, %0, 5 \n\t"
+       "        addi %1, %1, 32  \n\t" // Update src
+       "        addi %0, %0, 32  \n\t" // Update dst
+       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
        "        lxvd2x  4, %1, 5 \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
