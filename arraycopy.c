@@ -28,7 +28,7 @@
 
 // 32 bytes (or 4 64-bit elements) copied
 // at a time (per loop - see inline ASM).
-#define BULK_COPY_SIZE 32
+#define BULK_COPY_SIZE 32*4
 
 // Calculate buffer size in bytes able to hold a given
 // number of elements.
@@ -84,8 +84,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */
   size_t loop;
   size_t remainder;
 
-  loop      = n / (BULK_COPY_SIZE / ELEMENT_SIZE)*4; // n / 4, Four 64-bit elements.
-  remainder = n % (BULK_COPY_SIZE / ELEMENT_SIZE)*4; // n % 4, Four 64-bit elements.
+  loop      = n / (BULK_COPY_SIZE / ELEMENT_SIZE); // n / 4, Four 64-bit elements.
+  remainder = n % (BULK_COPY_SIZE / ELEMENT_SIZE); // n % 4, Four 64-bit elements.
 
 #if defined(DEBUG)
   printf("Copying %ld 64-bit element(s), " \
@@ -95,7 +95,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */
 
   asm (
        "        cmpldi %2, 0     \n\t" // Check if n < 4 and
-       "        beq- 2f          \n\t" // if so bail out to 3.
+       "        beq- 2f          \n\t" // if so bail out to 2.
        "        li 5, 16         \n\t" // r5 = offset.
        "        mtctr %2         \n\t" // Set counter.
        /********* Main Code ********/
@@ -105,19 +105,19 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n /* # of 64-bit elements */
        "        stxvd2x 4, %0, 5 \n\t"
        "        addi %1, %1, 32  \n\t" // Update src
        "        addi %0, %0, 32  \n\t" // Update dst
-       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  3, 0, %1 \n\t" // Copy +4 elements.
        "        lxvd2x  4, %1, 5 \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
        "        addi %1, %1, 32  \n\t" // Update src
        "        addi %0, %0, 32  \n\t" // Update dst
-       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  3, 0, %1 \n\t" // Copy +4 elements.
        "        lxvd2x  4, %1, 5 \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
        "        addi %1, %1, 32  \n\t" // Update src
        "        addi %0, %0, 32  \n\t" // Update dst
-       "        lxvd2x  3, 0, %1 \n\t" // Copy 4 elements.
+       "        lxvd2x  3, 0, %1 \n\t" // Copy +4 elements.
        "        lxvd2x  4, %1, 5 \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
@@ -175,7 +175,7 @@ int main(void)
   printf("3. Verifying if copy is ok...\n");
 
 
-  for (int p = 0; p < NUM_OF_ELEM_IN_BUFFER; ++p) {
+  for (int p = 0; p < 16*4+2; ++p) {
     if (destination[p] != source[p]) {
       printf(">> Mismatch @%d: %#lx != %#lx\n", p,              \
                                                 destination[p], \
