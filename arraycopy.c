@@ -5,7 +5,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <strings.h>
+#include <string.h>
 
 // 16 MiB, or 1 M 64-bit elements
 #define CHUNK_SIZE 16*1024*1024
@@ -25,14 +25,22 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
             "with %ld block iteration(s) " \
              "and %ld byte(s) as remainder(s)\n", n, i, remainder);
 
+//  if (i) {
   asm (
+        " 	li 3, 7+8	\n\t"
+        "	mtspr 3, 3	\n\t"
+//        "slow:	lis 4, slow@ha	\n\t"
+//        "	addi 4,4,slow@l \n\t"
+//       "        xor 3,3,3       \n\t"
+//       "	icbt 2,3,4	\n\t"
        "        cmpldi %2, 0    \n\t"
-       "        beq- 2f         \n\t"
+       "        beq   2f        \n\t"
        "        mtctr %2	\n\t"
        /********* Main Code ********/
        "1:      ld  3, 0(%1)    \n\t"
        "        ld  4, 8(%1)    \n\t"
        "        ld  5,16(%1)    \n\t"
+//       "	dcbz 0,%1	\n\t"
        "        ld  6,24(%1)    \n\t"
        "        std 3, 0(%0)    \n\t"
        "        std 4, 8(%0)    \n\t"
@@ -41,12 +49,14 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        /****************************/
        "        addi %1, %1, 32 \n\t"
        "        addi %0, %0, 32 \n\t"
-       "        bdnz 1b		\n\t"
+       "        bdnz+ 1b	\n\t"
        "2:      nop             \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
         : "memory", "r3", "r4", "r5", "r6"
        );
+
+ // }
 
   for (int j = i*4; j < n; ++j)
     dst[j] = src[j];
@@ -68,6 +78,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
                  "and %ld byte(s) as remainder(s)\n", n, i, remainder);
 
   asm (
+       " 	li 3, 7 	 \n\t"
+       "	mtspr 3, 3 	 \n\t"
        "1:      cmpldi %2, 0     \n\t"
        "        beq- 1f          \n\t"
        "        li 5, 16	 \n\t"
@@ -75,12 +87,12 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        /********* Main Code ********/
        "2:      lxvd2x  3, 0, %1 \n\t"
        "        lxvd2x  4, %1, 5 \n\t"
-       "        addi %1, %1, 16  \n\t"
+       "        addi %1, %1, 32  \n\t"
        "        stxvd2x 3, 0, %0 \n\t"
        "        stxvd2x 4, %0, 5 \n\t"
-       "      	addi %0, %0, 16  \n\t"
+       "      	addi %0, %0, 32  \n\t"
        /****************************/
-       "	bdnz  2b	 \n\t"
+       "	bdnz+  2b	 \n\t"
        "1:      nop              \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
@@ -123,10 +135,14 @@ int main(void)
 
   // Spend some time here.
   for (int p; p < 2500; ++p) {
+#if defined(MEMCPY)
+     memcpy(destination,source,1024*1024*16);
+#else
     // Copy 16 MiB, or 1 M 64-bit (8 bytes) elements.
     arraycopy(destination, source, 1024*1024);
     // Just zero destination.
-    arraycopy(destination, zero,   1024*1024);
+    //arraycopy(destination, zero,   1024*1024);
+#endif
   }
 
   printf("2. Done.\n");
