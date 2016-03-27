@@ -78,10 +78,11 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
                  "and %ld byte(s) as remainder(s)\n", n, i, remainder);
 
   asm (
-       " 	li 3, 7 	 \n\t"
+       ".align 4                 \n\t"
+       " 	li 3, 7          \n\t"
        "	mtspr 3, 3 	 \n\t"
        "1:      cmpldi %2, 0     \n\t"
-       "        beq- 1f          \n\t"
+       "        beq  1f          \n\t"
        "        li 5, 16	 \n\t"
        "        mtctr  %2	 \n\t"
        /********* Main Code ********/
