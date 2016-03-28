@@ -7,11 +7,9 @@
 #include <unistd.h>
 #include <string.h>
 
-#define ELEM_SIZE 8 // 8 bytes
-
-#define NUM_ELEM_IN_BUFFER 1024*1024*2 // 2M elements in buffer
-
-#define BUFFER_SIZE  NUM_ELEM_IN_BUFFER*ELEM_SIZE // 16 MiB in buffer
+#define ELEM_SIZE          8 			        // 8 bytes for uint64_t
+#define NUM_ELEM_IN_BUFFER 1024*1024*2 		        // 2 M elements in buffer
+#define BUFFER_SIZE  	   NUM_ELEM_IN_BUFFER*ELEM_SIZE // 16 MiB in buffer
 
 #if !defined(VSX)
 void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
@@ -24,9 +22,12 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   remainder = n % 4;
   i = n / 4;
 
+#if defined(VERBOSE)
   printf("Copying %ld 64-bit element(s), "  \
             "with %ld block iteration(s) " \
              "and %ld byte(s) as remainder(s)\n", n, i, remainder);
+#endif
+
   asm (
        " 	li 3, 7+8	\n\t"
        "	mtspr 3, 3	\n\t"
@@ -69,21 +70,24 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
   // Bulk rd/wr size is 8, ie 8 x 8 bytes, or
   // 8 x 64-bit elements rd/wr "at once".
-  remainder = n % 8;
-  i = n / 8;
+  remainder = n % 16;
+  i = n / 16;
 
+#if defined(VERBOSE)
   printf("VSX copying %ld 64-bit element(s), " \
                 "with %ld block iteration(s) " \
                  "and %ld byte(s) as remainder(s)\n", n, i, remainder);
+#endif
+
   asm (
        ".align 4                        \n\t"
-       " 	li    %%r9,   7         \n\t"
-       "	mtspr   3, %%r9         \n\t" // Set data stream to deepest pre-fetch.
+//     " 	li    %%r6,   7         \n\t"
+//     "	mtspr   3, %%r6         \n\t" // Set data stream to deepest pre-fetch.
        "        cmpldi %2, 0            \n\t"
        "        beq    exitt            \n\t"
-       "        li    %%r5, 16	        \n\t"
-       "        li    %%r6, 32	        \n\t"
-       "        li    %%r7, 48 	        \n\t"
+       "        li    %%r6, 16	        \n\t"
+       "        li    %%r7, 32	        \n\t"
+       "        li    %%r8, 48 	        \n\t"
        "        mtctr  %2	        \n\t"
 //     " 	lis  %%r9, bulk@ha      \n\t"
 //     "	addi %%r9, 9, bulk@l    \n\t"
@@ -91,15 +95,25 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 //     " 	lis  %%r9, exit@ha      \n\t"
 //     "	addi %%r9, 9, exit@l    \n\t"
 //     " 	icbt 	0, 0, 9         \n\t" // Touch code @3f to L1 cache
-       "bulkk:  lxvd2x  %%v4,  0,  %1 	\n\t" // Load 16 bytes, 2 elem.
-       "        lxvd2x  %%v5, %1, %%r5 	\n\t" // plus 2 elem.
-       "  	lxvd2x  %%v6, %1, %%r6 	\n\t" // plus 2 elem.
-       "        lxvd2x  %%v7, %1, %%r7	\n\t" // and finally we got 8 elems.
+       "bulkk:  lxvd2x  %%v6,  0,  %1 	\n\t" // Load 16 bytes, 2 elem.
+       "        lxvd2x  %%v7, %1, %%r6 	\n\t" // plus 2 elem.
+       "  	lxvd2x  %%v8, %1, %%r7 	\n\t" // plus 2 elem.
+       "        lxvd2x  %%v9, %1, %%r8	\n\t" // and finally we got 8 elems.
+       "        stxvd2x %%v6,  0,  %0 	\n\t" // Store them all back.
        "        addi     %1, %1,  64 	\n\t" // Update src by 64 bytes (8 elems).
-       "        stxvd2x %%v4,  0,  %0 	\n\t" // Store them all back.
-       "        stxvd2x %%v5, %0, %%r5 	\n\t"
-       " 	stxvd2x %%v6, %0, %%r6	\n\t"
-       "    	stxvd2x %%v7, %0, %%r7	\n\t"
+       "        stxvd2x %%v7, %0, %%r6 	\n\t"
+       " 	stxvd2x %%v8, %0, %%r7	\n\t"
+       "    	stxvd2x %%v9, %0, %%r8	\n\t"
+       "        lxvd2x  %%v6,  0,  %1 	\n\t" // Load 16 bytes, 2 elem.
+       "        lxvd2x  %%v7, %1, %%r6 	\n\t" // plus 2 elem.
+       "      	addi     %0, %0, 64  	\n\t" // Update dst by 64 bytes (8 elemt).
+       "        lxvd2x  %%v8, %1, %%r7 	\n\t" // Load 16 bytes, 2 elem.
+       "        lxvd2x  %%v9, %1, %%r8 	\n\t" // plus 2 elem.
+       "        addi     %1, %1,  64 	\n\t" // Update src by 64 bytes (8 elems).
+       "        stxvd2x %%v6,  0,  %0 	\n\t" // Store them all back.
+       "        stxvd2x %%v7, %0, %%r5 	\n\t"
+       " 	stxvd2x %%v8, %0, %%r6	\n\t"
+       "    	stxvd2x %%v9, %0, %%r7	\n\t"
        "      	addi     %0, %0, 64  	\n\t" // Update dst by 64 bytes (8 elemt).
        "	bdnz+  bulkk	        \n\t"
        "exitt:   nop                    \n\t"
@@ -108,7 +122,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
         : "memory", "3", "4", "5", "6", "7"
        );
 
-  for (int j = i*8; j < n; ++j)
+  for (int j = i*16; j < n; ++j)
     dst[j] = src[j];
 }
 #endif
