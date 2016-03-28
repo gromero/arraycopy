@@ -7,7 +7,8 @@
 #include <unistd.h>
 #include <string.h>
 
-#define ELEM_SIZE 8
+#define ELEM_SIZE 8 // 8 bytes
+
 #define NUM_ELEM_IN_BUFFER 1024*1024*2 // 2M elements in buffer
 
 #define BUFFER_SIZE  NUM_ELEM_IN_BUFFER*ELEM_SIZE // 16 MiB in buffer
@@ -20,13 +21,12 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
   // Bulk rd/wr size is 4, ie 4 x 8 bytes, or
   // 4 x 64-bit elements rd/wr "at once".
-  remainder = n % 8;
-  i = n / 8;
+  remainder = n % 4;
+  i = n / 4;
 
   printf("Copying %ld 64-bit element(s), "  \
             "with %ld block iteration(s) " \
              "and %ld byte(s) as remainder(s)\n", n, i, remainder);
-
   asm (
        " 	li 3, 7+8	\n\t"
        "	mtspr 3, 3	\n\t"
@@ -57,7 +57,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
         : "memory", "r3", "r4", "r5", "r6"
        );
 
-
   for (int j = i*4; j < n; ++j)
     dst[j] = src[j];
 }
@@ -78,8 +77,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
                  "and %ld byte(s) as remainder(s)\n", n, i, remainder);
   asm (
        ".align 4                        \n\t"
-//     " 	li    %%r9,   7         \n\t"
-//     "	mtspr   3, %%r9         \n\t" // Set data stream to deepest pre-fetch.
+       " 	li    %%r9,   7         \n\t"
+       "	mtspr   3, %%r9         \n\t" // Set data stream to deepest pre-fetch.
        "        cmpldi %2, 0            \n\t"
        "        beq    exitt            \n\t"
        "        li    %%r5, 16	        \n\t"
@@ -143,7 +142,7 @@ int main(void)
   // Spend some time here.
   for (int p = 0; p < 2500; ++p) {
 #if defined(MEMCPY) // Use glib memcpy().
-    memcpy(destination, source, NUM_ELEM_IN_BUFFER);
+    memcpy(destination, source, BUFFER_SIZE);
 #else // Use our crafted VSX copy.
     arraycopy(destination, source, NUM_ELEM_IN_BUFFER);
 #endif
