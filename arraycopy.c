@@ -31,10 +31,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   asm (
        " 	li 3, 7+8	\n\t"
        "	mtspr 3, 3	\n\t"
-//     "slow:	lis 4, slow@ha	\n\t"
-//     "	addi 4,4,slow@l \n\t"
-//     "        xor 3,3,3       \n\t"
-//     "	icbt 2,3,4	\n\t"
        "        cmpldi %2, 0    \n\t"
        "        beq   2f        \n\t"
        "        mtctr %2	\n\t"
@@ -42,7 +38,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "1:      ld  3, 0(%1)    \n\t"
        "        ld  4, 8(%1)    \n\t"
        "        ld  5,16(%1)    \n\t"
-//     "	dcbz 0,%1	\n\t"
        "        ld  6,24(%1)    \n\t"
        "        std 3, 0(%0)    \n\t"
        "        std 4, 8(%0)    \n\t"
@@ -81,42 +76,34 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
   asm (
        ".align 4                        \n\t"
-//     " 	li    %%r6,   7         \n\t"
-//     "	mtspr   3, %%r6         \n\t" // Set data stream to deepest pre-fetch.
-       "        cmpldi %2, 0            \n\t"
-       "        beq    exitt            \n\t"
-       "        li    %%r6, 16	        \n\t"
-       "        li    %%r7, 32	        \n\t"
-       "        li    %%r8, 48 	        \n\t"
-       "        mtctr  %2	        \n\t"
-//     " 	lis  %%r9, bulk@ha      \n\t"
-//     "	addi %%r9, 9, bulk@l    \n\t"
-//     "	icbt	0, 0, 9         \n\t" // Touch code @2f to L1 cache
-//     " 	lis  %%r9, exit@ha      \n\t"
-//     "	addi %%r9, 9, exit@l    \n\t"
-//     " 	icbt 	0, 0, 9         \n\t" // Touch code @3f to L1 cache
-       "bulkk:  lxvd2x  %%v6,  0,  %1 	\n\t" // Load 16 bytes, 2 elem.
-       "        lxvd2x  %%v7, %1, %%r6 	\n\t" // plus 2 elem.
-       "  	lxvd2x  %%v8, %1, %%r7 	\n\t" // plus 2 elem.
-       "        lxvd2x  %%v9, %1, %%r8	\n\t" // and finally we got 8 elems.
-       "        stxvd2x %%v6,  0,  %0 	\n\t" // Store them all back.
-       "        addi     %1, %1,  64 	\n\t" // Update src by 64 bytes (8 elems).
-       "        stxvd2x %%v7, %0, %%r6 	\n\t"
-       " 	stxvd2x %%v8, %0, %%r7	\n\t"
-       "    	stxvd2x %%v9, %0, %%r8	\n\t"
-       "        lxvd2x  %%v6,  0,  %1 	\n\t" // Load 16 bytes, 2 elem.
-       "        lxvd2x  %%v7, %1, %%r6 	\n\t" // plus 2 elem.
-       "      	addi     %0, %0, 64  	\n\t" // Update dst by 64 bytes (8 elemt).
-       "        lxvd2x  %%v8, %1, %%r7 	\n\t" // Load 16 bytes, 2 elem.
-       "        lxvd2x  %%v9, %1, %%r8 	\n\t" // plus 2 elem.
-       "        addi     %1, %1,  64 	\n\t" // Update src by 64 bytes (8 elems).
-       "        stxvd2x %%v6,  0,  %0 	\n\t" // Store them all back.
-       "        stxvd2x %%v7, %0, %%r5 	\n\t"
-       " 	stxvd2x %%v8, %0, %%r6	\n\t"
-       "    	stxvd2x %%v9, %0, %%r7	\n\t"
-       "      	addi     %0, %0, 64  	\n\t" // Update dst by 64 bytes (8 elemt).
-       "	bdnz+  bulkk	        \n\t"
-       "exitt:   nop                    \n\t"
+       "        cmpldi   %2,  0         \n\t"
+       "        beq       2f            \n\t"
+       "        li        6, 16	        \n\t"
+       "        li        7, 32	        \n\t"
+       "        li        8, 48 	\n\t"
+       "        mtctr    %2	        \n\t"
+       "1:      lxvd2x    6,  0, %1 	\n\t"
+       "        lxvd2x    7, %1,  6 	\n\t"
+       "  	lxvd2x    8, %1,  7 	\n\t"
+       "        lxvd2x    9, %1,  8	\n\t"
+       "        stxvd2x   6,  0, %0 	\n\t"
+       "        addi     %1, %1, 64 	\n\t"
+       "        stxvd2x   7, %0,  6 	\n\t"
+       " 	stxvd2x   8, %0,  7	\n\t"
+       "    	stxvd2x   9, %0,  8	\n\t"
+       "        lxvd2x    6,  0, %1 	\n\t"
+       "        lxvd2x    7, %1,  6 	\n\t"
+       "      	addi     %0, %0, 64  	\n\t"
+       "        lxvd2x    8, %1,  7 	\n\t"
+       "        lxvd2x    9, %1,  8 	\n\t"
+       "        addi     %1, %1, 64 	\n\t"
+       "        stxvd2x   6,  0, %0 	\n\t"
+       "        stxvd2x   7, %0,  5 	\n\t"
+       " 	stxvd2x   8, %0,  6	\n\t"
+       "    	stxvd2x   9, %0,  7	\n\t"
+       "      	addi     %0, %0, 64  	\n\t"
+       "	bdnz+ 	 1b	        \n\t"
+       "2:      nop                     \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
         : "memory", "3", "4", "5", "6", "7"
@@ -153,7 +140,7 @@ int main(void)
 
   printf("2. Exercising...\n");
 
-  // Spend some time here.
+  // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
 
 #if defined(MEMCPY) // Use libc memcpy().
