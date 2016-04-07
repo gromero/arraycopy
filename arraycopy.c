@@ -127,11 +127,11 @@ int main(void)
 
   printf("1. Done.\n");
 
-#if defined(CHECKCOPY)
+#if defined(CHECK)
   printf("2. Verifying if copy is ok...\n");
 
 
-  for (int p = 0; p < 16*4+2; ++p) {
+  for (int p = 0; p < NUM_ELEM_IN_BUFFER; ++p) {
     if (destination[p] != source[p]) {
       printf(">> Mismatch @%d: %#lx != %#lx\n", p,              \
                                                 destination[p], \

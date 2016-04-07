@@ -7,8 +7,8 @@ debug:
 	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DVSX -DDEBUG
 
 check:
-	gcc -O0 -g arraycopy.c -o arraycopy -DCHECKCOPY
-	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DCHECKCOPY
+	gcc -O0 -g arraycopy.c -o arraycopy -DCHECK
+	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DCHECK
 
 clean:
 	rm -fr arraycopy arraycopy_vsx
