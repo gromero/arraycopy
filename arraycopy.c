@@ -66,8 +66,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
   // Bulk rd/wr size is 8, ie 8 x 8 bytes, or
   // 8 x 64-bit elements rd/wr "at once".
-  remainder = n % 8;
-  i = n / 8;
+  remainder = n % 4;
+  i = n / 4;
 
 #if defined(VERBOSE)
   printf("VSX copying %ld 64-bit element(s), " \
@@ -84,14 +84,10 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "        mtctr    %2	        \n\t"
        "1:      lxvd2x    6,  0, %1 	\n\t"
        "        lxvd2x    7, %1,  6 	\n\t"
-       "  	lxvd2x    8, %1,  7 	\n\t"
-       "        lxvd2x    9, %1,  8	\n\t"
        "        stxvd2x   6,  0, %0 	\n\t"
        "        stxvd2x   7, %0,  6 	\n\t"
-       " 	stxvd2x   8, %0,  7	\n\t"
-       "    	stxvd2x   9, %0,  8	\n\t"
-       "        addi     %1, %1, 64 	\n\t"
-       "      	addi     %0, %0, 64  	\n\t"
+       "        addi     %1, %1, 32 	\n\t"
+       "      	addi     %0, %0, 32  	\n\t"
        "	bdnz+ 	 1b	        \n\t"
        "2:      nop                     \n\t"
         :
@@ -99,7 +95,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
         : "memory", "3", "4", "5", "6", "7"
        );
 
-  for (int j = i*8; j < n; ++j)
+  for (int j = i*4; j < n; ++j)
     dst[j] = src[j];
 }
 #endif
