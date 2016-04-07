@@ -96,7 +96,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "2:      nop                     \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
-        : "memory", "3", "4", "5", "6", "7"
+        : "memory", "3", "4", "5", "6", "7", "8"
        );
 
   for (int j = i*8; j < n; ++j)
