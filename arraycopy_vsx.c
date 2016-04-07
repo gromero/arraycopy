@@ -27,7 +27,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "        beq       2f            \n\t"
        "        li        6, 16	        \n\t"
        "        li        7, 32	        \n\t"
-       "        li        8, 48 	\n\t"
        "        mtctr    %2	        \n\t"
        "1:      lxvd2x    6,  0, %1 	\n\t"
        "        lxvd2x    7, %1,  6 	\n\t"
