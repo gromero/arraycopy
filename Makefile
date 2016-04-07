@@ -1,4 +1,4 @@
-all:
+all:	arraycopy.c
 	gcc -O0 -g arraycopy.c -o arraycopy
 	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DVSX
 

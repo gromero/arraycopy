@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "source.h"
 
 #define ELEM_SIZE          8 			        // 8 bytes for uint64_t
 #define NUM_ELEM_IN_BUFFER 1024*1024*2 		        // 2 M elements in buffer
@@ -65,8 +66,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
   // Bulk rd/wr size is 8, ie 8 x 8 bytes, or
   // 8 x 64-bit elements rd/wr "at once".
-  remainder = n % 16;
-  i = n / 16;
+  remainder = n % 8;
+  i = n / 8;
 
 #if defined(VERBOSE)
   printf("VSX copying %ld 64-bit element(s), " \
@@ -75,7 +76,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 #endif
 
   asm (
-       ".align 4                        \n\t"
        "        cmpldi   %2,  0         \n\t"
        "        beq       2f            \n\t"
        "        li        6, 16	        \n\t"
@@ -87,20 +87,10 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "  	lxvd2x    8, %1,  7 	\n\t"
        "        lxvd2x    9, %1,  8	\n\t"
        "        stxvd2x   6,  0, %0 	\n\t"
-       "        addi     %1, %1, 64 	\n\t"
        "        stxvd2x   7, %0,  6 	\n\t"
        " 	stxvd2x   8, %0,  7	\n\t"
        "    	stxvd2x   9, %0,  8	\n\t"
-       "        lxvd2x    6,  0, %1 	\n\t"
-       "        lxvd2x    7, %1,  6 	\n\t"
-       "      	addi     %0, %0, 64  	\n\t"
-       "        lxvd2x    8, %1,  7 	\n\t"
-       "        lxvd2x    9, %1,  8 	\n\t"
        "        addi     %1, %1, 64 	\n\t"
-       "        stxvd2x   6,  0, %0 	\n\t"
-       "        stxvd2x   7, %0,  5 	\n\t"
-       " 	stxvd2x   8, %0,  6	\n\t"
-       "    	stxvd2x   9, %0,  7	\n\t"
        "      	addi     %0, %0, 64  	\n\t"
        "	bdnz+ 	 1b	        \n\t"
        "2:      nop                     \n\t"
@@ -109,7 +99,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
         : "memory", "3", "4", "5", "6", "7"
        );
 
-  for (int j = i*16; j < n; ++j)
+  for (int j = i*8; j < n; ++j)
     dst[j] = src[j];
 }
 #endif
@@ -118,27 +108,10 @@ int main(void)
 {
   printf("** Inline ASM for VSX test **\n\n");
 
-  uint64_t* source      = malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
+//uint64_t* source      => from source.h
   uint64_t* destination = malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
 
-  int fd, rc;
-
-  printf("1. Creating source buffer with random data... \n");
-
-  fd = open("/dev/urandom", O_RDONLY);
-  if (fd < 0) {
-    perror("open:");
-    exit(1);
-  }
-
-  rc = read(fd, (void*) source, BUFFER_SIZE);
-  if (rc != BUFFER_SIZE) {
-    perror("read:");
-    exit(1);
-  } else
-    printf("1. Done.\n");
-
-  printf("2. Exercising...\n");
+  printf("1. Exercising...\n");
 
   // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
@@ -152,10 +125,10 @@ int main(void)
 #endif
   }
 
-  printf("2. Done.\n");
+  printf("1. Done.\n");
 
 #if defined(CHECKCOPY)
-  printf("3. Verifying if copy is ok...\n");
+  printf("2. Verifying if copy is ok...\n");
 
 
   for (int p = 0; p < 16*4+2; ++p) {
@@ -167,7 +140,7 @@ int main(void)
     }
   }
 
-  printf("3. Done.\n");
+  printf("2. Done.\n");
 #endif
 
   exit(0);
