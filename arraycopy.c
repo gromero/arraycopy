@@ -118,8 +118,6 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 
 int main(void)
 {
-  printf("** Inline ASM for VSX test **\n\n");
-
 //uint64_t* source      => from source.h, random data.
   uint64_t* destination = (uint64_t*)malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
 
