@@ -123,8 +123,6 @@ int main(void)
 //uint64_t* source      => from source.h, random data.
   uint64_t* destination = (uint64_t*)malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
 
-  printf("1. Exercising...\n");
-
   // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
 
@@ -137,10 +135,8 @@ int main(void)
 #endif
   }
 
-  printf("1. Done.\n");
-
 #if defined(CHECK)
-  printf("2. Verifying if copy is ok...\n");
+  printf("Verifying if copy is ok...\n");
 
 
   for (int p = 0; p < NUM_ELEM_IN_BUFFER; ++p) {
@@ -152,7 +148,7 @@ int main(void)
     }
   }
 
-  printf("2. Done.\n");
+  printf("Done.\n");
 #endif
 
   exit(0);
