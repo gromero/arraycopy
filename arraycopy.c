@@ -1,14 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include "source.h"
 
 #define ELEM_SIZE          8 			        // 8 bytes for uint64_t
-#define NUM_ELEM_IN_BUFFER 1024*1024*2 		        // 2 M elements in buffer
+#define NUM_ELEM_IN_BUFFER 1024*1024*2   	        // 2 M elements in buffer
 #define BUFFER_SIZE  	   NUM_ELEM_IN_BUFFER*ELEM_SIZE // 16 MiB in buffer
 
 #if !defined(VSX)
@@ -118,27 +120,10 @@ int main(void)
 {
   printf("** Inline ASM for VSX test **\n\n");
 
-  uint64_t* source      = malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
-  uint64_t* destination = malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
+//uint64_t* source      => from source.h, random data.
+  uint64_t* destination = (uint64_t*)malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
 
-  int fd, rc;
-
-  printf("1. Creating source buffer with random data... \n");
-
-  fd = open("/dev/urandom", O_RDONLY);
-  if (fd < 0) {
-    perror("open:");
-    exit(1);
-  }
-
-  rc = read(fd, (void*) source, BUFFER_SIZE);
-  if (rc != BUFFER_SIZE) {
-    perror("read:");
-    exit(1);
-  } else
-    printf("1. Done.\n");
-
-  printf("2. Exercising...\n");
+  printf("1. Exercising...\n");
 
   // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
@@ -152,10 +137,10 @@ int main(void)
 #endif
   }
 
-  printf("2. Done.\n");
+  printf("1. Done.\n");
 
 #if defined(CHECK)
-  printf("3. Verifying if copy is ok...\n");
+  printf("2. Verifying if copy is ok...\n");
 
 
   for (int p = 0; p < NUM_ELEM_IN_BUFFER; ++p) {
@@ -167,7 +152,7 @@ int main(void)
     }
   }
 
-  printf("3. Done.\n");
+  printf("2. Done.\n");
 #endif
 
   exit(0);
