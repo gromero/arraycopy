@@ -1,8 +1,8 @@
 all:
 	gcc -O0 -g arraycopy.c -o arraycopy
 	gcc -O0 -g arraycopy.c -o arraycopy_with_check -DCHECK
-	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DVSX
-	gcc -O0 -g arraycopy.c -o arraycopy_vsx_with_check -DVSX -DCHECK
+	gcc -O0 -g arraycopy_vsx.c -o arraycopy_vsx -DVSX
+	gcc -O0 -g arraycopy_vsx.c -o arraycopy_vsx_with_check -DVSX -DCHECK
 
 debug:
 	gcc -O0 -g arraycopy.c -o arraycopy -DDEBUG
