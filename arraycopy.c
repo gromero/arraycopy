@@ -16,13 +16,11 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
 {
   size_t i;
 
-  
-  // Number of 64-bit elements copied per loop. 
+
+  // Number of 64-bit elements copied per loop.
   i = n / 4;
 
   asm (
-       " 	li 3, 7+8	\n\t"
-       "	mtspr 3, 3	\n\t"
        "        cmpldi %2, 0    \n\t"
        "        beq   2f        \n\t"
        "        mtctr %2	\n\t"
@@ -53,14 +51,13 @@ int main(void)
 {
 //uint64_t* source      => from source.h, random data.
   uint64_t* destination = (uint64_t*)malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
-  
+
   for (int p = 0; p < 2500; ++p) {
     arraycopy(destination, source, NUM_ELEM_IN_BUFFER);
   }
 
 #if defined(CHECK)
   printf("Verifying if copy is ok...\n");
-
 
   for (int p = 0; p < NUM_ELEM_IN_BUFFER; ++p) {
     if (destination[p] != source[p]) {
