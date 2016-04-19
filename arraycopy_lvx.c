@@ -18,41 +18,25 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   size_t i = 0;
 
   // Copy 16 64-bit elements per loop.
-  i = n / 16;
+  i = n / 4;
 
   asm (
-       "        cmpldi   %2,  0         \n\t"
-       "        beq       2f            \n\t"
-       "        li        6, 16	        \n\t"
-       "        li        7, 32	        \n\t"
-       "        li        8, 48 	\n\t"
-       "        mtctr    %2	        \n\t"
-       "        .align 4               \n\t"
+       "        cmpldi %2,  0           \n\t"
+       "        beq    2f               \n\t"
+       "        li     6, 16	        \n\t"
+       "        mtctr  %2	        \n\t"
+       "        .align 4                \n\t"
        "1:      lvx    6,  0, %1 	\n\t"
-       "        lvx    7, %1,  6 	\n\t"
-       "  	lvx    8, %1,  7 	\n\t"
-       "        lvx    9, %1,  8	\n\t"
        "        stvx   6,  0, %0 	\n\t"
-       "        addi     %1, %1, 64 	\n\t"
-       "        stvx   7, %0,  6 	\n\t"
-       " 	stvx   8, %0,  7	\n\t"
-       "    	stvx   9, %0,  8	\n\t"
-       "        lvx    6,  0, %1 	\n\t"
-       "        lvx    7, %1,  6 	\n\t"
-       "      	addi     %0, %0, 64  	\n\t"
-       "        lvx    8, %1,  7 	\n\t"
-       "        lvx    9, %1,  8 	\n\t"
-       "        addi     %1, %1, 64 	\n\t"
-       "        stvx   6,  0, %0 	\n\t"
-       "        stvx   7, %0,  6 	\n\t"
-       " 	stvx   8, %0,  7	\n\t"
-       "    	stvx   9, %0,  8	\n\t"
-       "      	addi     %0, %0, 64  	\n\t"
-       "	bdnz+ 	 1b	        \n\t"
+       "        lvx    6,  6, %1 	\n\t"
+       "        stvx   6,  6, %0 	\n\t"
+       "      	addi   %0, %0, 32  	\n\t"
+       "        addi   %1, %1, 32       \n\t"
+       "	bdnz+  1b	        \n\t"
        "2:      nop                     \n\t"
         :
         : "r"(dst), "r"(src), "r"(i)
-        : "memory", "3", "4", "5", "6", "7", "8"
+        : "memory", "3", "4", "5", "6"
        );
 
   for (int j = i*16; j < n; ++j)
