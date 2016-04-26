@@ -1,0 +1,15 @@
+root@sid:/home/brenohl/foo# for i in `seq 4`; do time numactl --cpunodebind=16 --membind=16 ./arraycopy_vsx ; done |& fgrep real
+real	0m4.364s
+real	0m4.356s
+real	0m4.360s
+real	0m4.363s
+root@sid:/home/brenohl/foo# for i in `seq 4`; do time numactl --cpunodebind=16 --membind=16 ./arraycopy ; done |& fgrep real
+real	0m4.797s
+real	0m4.804s
+real	0m4.792s
+real	0m4.805s
+root@sid:/home/brenohl/foo# for i in `seq 4`; do time numactl --cpunodebind=16 --membind=16 ./arraycopy_memcpy ; done |& fgrep real
+real	0m4.311s
+real	0m4.310s
+real	0m4.321s
+real	0m4.311s
