@@ -21,6 +21,7 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   i = n / 4;
 
   asm (
+//     "        dcbt     %1, 0         \n\t"
        "        cmpldi   %2,  0         \n\t"
        "        beq       2f            \n\t"
        "        dcbt 	  %1, 0		\n\t"
