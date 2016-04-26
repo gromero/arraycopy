@@ -11,9 +11,11 @@ all: 	arraycopy.o arraycopy_vsx.o arraycopy_lvx.o arraycopy_memcpy.o
 	$(CC) arraycopy_memcpy.o -o arraycopy_memcpy
 	$(CC) arraycopy_memcpy.o -o arraycopy_memcpy_with_check -DCHECK
 
-check:
-	gcc -O0 -g arraycopy.c -o arraycopy -DCHECK
-	gcc -O0 -g arraycopy.c -o arraycopy_vsx -DCHECK
+test:	all
+	./arraycopy_with_check
+	./arraycopy_vsx_with_check
+	./arraycopy_lvx_with_check
+	./arraycopy_memcpy_with_check
 
 clean:
 	rm -fr *.o
@@ -22,3 +24,4 @@ clean:
 	rm -fr arraycopy_lvx  arraycopy_memcpy
 	rm -fr arraycopy_lvx_with_check arraycopy_memcpy_with_check
 	rm -fr perf*
+
