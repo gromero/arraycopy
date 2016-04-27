@@ -21,10 +21,11 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
   i = n / 4;
 
   asm (
-//     "        dcbt     %1, 0         \n\t"
-       "        cmpldi   %2,  0         \n\t"
+       "        cmpldi   %2, 0          \n\t"
        "        beq       2f            \n\t"
-       "        dcbt 	  %1, 0		\n\t"
+       "        dcbt 	  %1, 0		\n\t" // Touch d-cache
+       "        li 	  6,  7 	\n\t" // 7 => Deepest pre-fetch
+       "        mtspr	  3,  6         \n\t" // DSCR = 0x03
        "        li        6, 16	        \n\t"
        "        mtctr    %2	        \n\t"
        "        .align 5                \n\t"
@@ -35,7 +36,8 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
        "      	addi     %0, %0, 32  	\n\t"
        "        addi     %1, %1, 32 	\n\t"
        "	bdnz+ 	 1b	        \n\t"
-       "2:      nop                     \n\t"
+       "2:      xor      6, 6, 6           \n\t"
+       "        mtspr    3, 6           \n\t" // Restore DSCR to default
         :
         : "r"(dst), "r"(src), "r"(i)
         : "memory", "3", "4", "5", "6"
