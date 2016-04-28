@@ -1,0 +1,21 @@
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=1 --membind=1 sudo perf stat ./arraycopy |& fgrep elapsed
+       3.732730189 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=1 --membind=1 sudo perf stat ./arraycopy_vsx |& fgrep elapsed
+       3.188734593 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=1 --membind=1 sudo perf stat ./arraycopy |& fgrep elapsed
+       3.653970505 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=1 --membind=1 sudo perf stat ./arraycopy_vsx |& fgrep elapsed
+       3.264900784 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=0 --membind=0 sudo perf stat ./arraycopy_vsx |& fgrep elapsed
+       4.061505118 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=1 --membind=1 sudo perf stat ./arraycopy_vsx |& fgrep elapsed
+       3.292632622 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=0 --membind=0 sudo perf stat ./arraycopy |& fgrep elapsed
+       5.188287246 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=0 --membind=0 sudo perf stat ./arraycopy |& fgrep elapsed
+       5.203972331 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=0 --membind=0 sudo perf stat ./arraycopy_vsx |& fgrep elapsed
+       4.037602702 seconds time elapsed
+gromero@pub:~/git/arraycopy$ numactl --cpunodebind=0 --membind=0 sudo perf stat ./arraycopy |& fgrep elapsed
+       5.174629108 seconds time elapsed
+

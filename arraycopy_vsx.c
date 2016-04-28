@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 #include "source.h"
 
 #define ELEM_SIZE          8 			        // 8 bytes for uint64_t
@@ -47,14 +48,28 @@ void arraycopy(uint64_t *dst, uint64_t *src, size_t n)
     dst[j] = src[j];
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
 //uint64_t* source      => from source.h, random data.
   uint64_t* destination = (uint64_t*)malloc(BUFFER_SIZE); // 16 MiB, or 2 M 64-bit elements.
 
+  int dst_disp, src_disp;
+  int num_elem;
+
+  if (argc == 4) {
+    dst_disp = atoi(argv[1]);
+    src_disp = atoi(argv[2]);
+    num_elem = atoi(argv[3]);
+  }
+
+  printf("dst disp: %d, src disp: %d, #of elements: %d\n",
+                                                          dst_disp,
+                                                          src_disp,
+                                                          (int) pow(2,num_elem));
+	
   // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
-    arraycopy(destination, source, NUM_ELEM_IN_BUFFER);
+    arraycopy(destination + dst_disp, source + src_disp, pow(2,num_elem));
   }
 
 #if defined(CHECK)
