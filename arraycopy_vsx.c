@@ -61,15 +61,10 @@ int main(int argc, char **argv)
     src_disp = atoi(argv[2]);
     num_elem = atoi(argv[3]);
   }
-
-  printf("dst disp: %d, src disp: %d, #of elements: %d\n",
-                                                          dst_disp,
-                                                          src_disp,
-                                                          (int) pow(2,num_elem));
 	
   // Waist some time here.
   for (int p = 0; p < 2500; ++p) {
-    arraycopy(destination + dst_disp, source + src_disp, pow(2,num_elem));
+    arraycopy(destination, source, NUM_ELEM_IN_BUFFER);
   }
 
 #if defined(CHECK)
