@@ -1,4 +1,3 @@
 *.o
 arraycopy
-arraycopy_*
 perf*
