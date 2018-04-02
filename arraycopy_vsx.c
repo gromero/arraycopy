@@ -55,14 +55,8 @@ int main(int argc, char **argv)
 
   int dst_disp, src_disp;
   int num_elem;
-
-  if (argc == 4) {
-    dst_disp = atoi(argv[1]);
-    src_disp = atoi(argv[2]);
-    num_elem = atoi(argv[3]);
-  }
 	
-  // Waist some time here.
+  // copy many times to avoid noise in the comparison
   for (int p = 0; p < 2500; ++p) {
     arraycopy(destination, source, NUM_ELEM_IN_BUFFER);
   }
